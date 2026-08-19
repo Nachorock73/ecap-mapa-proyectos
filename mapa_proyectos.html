@@ -164,6 +164,35 @@
       backdrop-filter: blur(14px);
     }
     .map-tooltip.visible { opacity: 1; transform: translateY(0); }
+    .map-tooltip.pinned {
+      pointer-events: auto;
+      user-select: text;
+      cursor: text;
+      border-color: rgba(18,45,95,.28);
+      box-shadow: 0 20px 48px rgba(18,45,95,.27);
+    }
+    .map-tooltip.pinned * { user-select: text; }
+    .tooltip-close {
+      display: none;
+      position: absolute;
+      top: 9px;
+      right: 9px;
+      width: 28px;
+      height: 28px;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: 1px solid rgba(18,45,95,.16);
+      border-radius: 9px;
+      color: var(--ink);
+      background: rgba(255,255,255,.58);
+      font: 700 18px/1 system-ui, sans-serif;
+      cursor: pointer;
+      user-select: none;
+    }
+    .map-tooltip.pinned .tooltip-close { display: flex; }
+    .tooltip-close:hover, .tooltip-close:focus-visible { color: #fff; background: var(--brand-navy); outline: none; }
+    .map-tooltip.pinned .tooltip-kicker, .map-tooltip.pinned .tooltip-title { padding-right: 30px; }
     .tooltip-kicker { margin: 0 0 6px; color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
     .tooltip-title { margin: 0 0 12px; font-size: 15px; line-height: 1.28; font-weight: 700; letter-spacing: -.01em; }
     .tooltip-line { margin: -3px 0 12px; padding: 8px 10px; background: rgba(48,165,227,.1); border-radius: 9px; border-left: 3px solid var(--brand-cyan); }
@@ -571,7 +600,9 @@
     }
 
     function showTooltip(project, event, pin = false) {
+      if (!pin && tooltip.dataset.pinned === "true") return;
       tooltip.innerHTML = `
+        <button class="tooltip-close" type="button" aria-label="Cerrar información">×</button>
         <p class="tooltip-kicker">${escapeHtml(project.tipo)} · ${escapeHtml(project.estado)}</p>
         <h3 class="tooltip-title">${escapeHtml(project.titulo)}</h3>
         <div class="tooltip-line"><span>Línea prioritaria de investigación ECAP</span><strong>${escapeHtml(project.linea)}</strong></div>
@@ -584,13 +615,17 @@
         </dl>
         <div class="tooltip-summary"><span>Resumen del documento</span><p>${escapeHtml(project.resumen)}</p></div>`;
       tooltip.classList.add("visible");
+      tooltip.classList.toggle("pinned", pin);
       tooltip.setAttribute("aria-hidden", "false");
       tooltip.dataset.pinned = pin ? "true" : "false";
-      positionTooltip(event);
+      tooltip.setAttribute("role", pin ? "dialog" : "tooltip");
+      positionTooltip(event, true);
+      if (pin) tooltip.querySelector(".tooltip-close").addEventListener("click", closeTooltip);
     }
 
-    function positionTooltip(event) {
+    function positionTooltip(event, force = false) {
       if (!event || !tooltip.classList.contains("visible")) return;
+      if (!force && tooltip.dataset.pinned === "true") return;
       const bounds = root.getBoundingClientRect();
       const box = tooltip.getBoundingClientRect();
       const margin = 12;
@@ -604,17 +639,38 @@
       tooltip.style.top = `${y}px`;
     }
 
+    function clampTooltipToBounds() {
+      if (!tooltip.classList.contains("visible")) return;
+      const bounds = root.getBoundingClientRect();
+      const box = tooltip.getBoundingClientRect();
+      const margin = 12;
+      const currentX = Number.parseFloat(tooltip.style.left) || margin;
+      const currentY = Number.parseFloat(tooltip.style.top) || margin;
+      tooltip.style.left = `${Math.max(margin, Math.min(currentX, bounds.width - box.width - margin))}px`;
+      tooltip.style.top = `${Math.max(margin, Math.min(currentY, bounds.height - box.height - margin))}px`;
+    }
+
     function hideTooltip() {
       if (tooltip.dataset.pinned === "true") return;
       tooltip.classList.remove("visible");
       tooltip.setAttribute("aria-hidden", "true");
     }
 
+    function closeTooltip() {
+      tooltip.dataset.pinned = "false";
+      tooltip.classList.remove("visible", "pinned");
+      tooltip.setAttribute("aria-hidden", "true");
+      tooltip.setAttribute("role", "tooltip");
+    }
+
     map.on("click", event => {
       if (!event.originalEvent.target.closest(".leaflet-interactive")) {
-        tooltip.dataset.pinned = "false";
-        hideTooltip();
+        closeTooltip();
       }
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && tooltip.dataset.pinned === "true") closeTooltip();
     });
 
     function makeChoice(value, count, group) {
@@ -678,7 +734,7 @@
       document.getElementById("ongoing-count").textContent = visibleProjects.filter(p => p.estado === "En curso").length;
       document.getElementById("finished-count").textContent = visibleProjects.filter(p => p.estado === "Finalizado").length;
       document.getElementById("empty-state").classList.toggle("visible", visibleProjects.length === 0);
-      hideTooltip();
+      closeTooltip();
       requestAnimationFrame(separateCoincidentMarkers);
     }
 
@@ -743,7 +799,11 @@
     updateMap();
     fitSelection();
     map.on("zoomend moveend", () => { separateCoincidentMarkers(); refreshSpatialLabels(); });
-    window.addEventListener("resize", () => { map.invalidateSize(); if (tooltip.classList.contains("visible")) hideTooltip(); });
+    window.addEventListener("resize", () => {
+      map.invalidateSize();
+      if (tooltip.dataset.pinned === "true") clampTooltipToBounds();
+      else if (tooltip.classList.contains("visible")) hideTooltip();
+    });
     document.getElementById("load-state").hidden = true;
     }
 
