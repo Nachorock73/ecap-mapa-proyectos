@@ -4,7 +4,7 @@ Mapa interactivo institucional de los proyectos vinculados con la Estación Cien
 
 ## Abrir el mapa
 
-La versión pública se consulta mediante GitHub Pages. El mapa permite:
+La versión pública se consulta en **[nachorock73.github.io/ecap-mapa-proyectos](https://nachorock73.github.io/ecap-mapa-proyectos/)** mediante GitHub Pages. El mapa permite:
 
 - filtrar proyectos por tipo, estado y línea prioritaria de investigación ECAP;
 - consultar título, autores, año, resumen y coordenadas de cada proyecto;
