@@ -79,9 +79,15 @@ Si una fuente entrega coordenadas proyectadas —por ejemplo UTM—, deben trans
 
 ## Capas cartográficas
 
-El filtro muestra las capas en este orden: límites provinciales, cantonales y parroquiales; Ejes FONAG; Áreas de Conservación Hídrica; Quito urbano; vías; y ríos. Las vías se representan en gris y los ríos en celeste brillante.
+El filtro muestra las capas en este orden: límites provinciales, cantonales y parroquiales; Ejes FONAG; Áreas de Conservación Hídrica; Quito urbano; cobertura de la tierra 2024; vías; y ríos. Las vías se representan en gris y los ríos en celeste brillante. El mapa base usa directamente las teselas públicas de OpenStreetMap y no requiere una clave de API.
 
 Las vías y los ríos publicados fueron recortados geométricamente con el límite de Ejes FONAG antes de transformarse a WGS 84 geográfico e incorporarse al HTML. La versión pública contiene únicamente las porciones interiores resultantes; no necesita descargar archivos SHP durante su uso.
+
+La cobertura 2024 fue disuelta mediante su clasificación de nivel 2 y posteriormente recortada con Ejes FONAG. La capa publicada contiene una geometría por clase presente dentro del ámbito. Su flecha permite desplegar u ocultar la leyenda cromática; el páramo se representa en morado para distinguirlo con claridad.
+
+## Estaciones
+
+El apartado **Estaciones** permite activar de forma independiente las estaciones hidrológicas, meteorológicas y pluviométricas. Todas se muestran con símbolos triangulares y un color diferente por tipo. Al situar el cursor o seleccionar una estación se muestran su nombre, tipo, código, altitud, estado y provincia cuando esos atributos están disponibles. La versión publicada contiene 60 estaciones activas transformadas a WGS 84.
 
 ## Validación automática
 
