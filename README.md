@@ -27,6 +27,10 @@ No se debe abrir el HTML con una dirección que empiece por `file:///`, porque e
 
 El mapa necesita conexión a Internet para descargar Leaflet, Papa Parse y las teselas del mapa base.
 
+## Buscar proyectos
+
+El campo **Búsqueda por palabras** consulta simultáneamente título, autoría, línea prioritaria, tipo, estado y resumen. Al escribir dos o más caracteres se muestran debajo hasta ocho coincidencias ordenadas por relevancia, con el título, la autoría y un fragmento del resumen; las palabras coincidentes aparecen resaltadas. Al seleccionar un resultado, el mapa habilita sus filtros, acerca la vista al punto y fija su cuadro informativo.
+
 ## Actualizar la base con Excel
 
 1. Hacer una copia de respaldo de `base_datos_proyectos_investigacion.csv`.
@@ -72,6 +76,12 @@ Los puntos están almacenados en el sistema geográfico **WGS 84, EPSG:4326**, e
 Cuando un documento declara coordenadas, la base conserva el valor exacto convertido a grados decimales si el original estaba en otro formato. No se deben desplazar ni redondear esos puntos para evitar coincidencias visuales: el mapa separa únicamente su representación en pantalla cuando dos registros comparten la misma coordenada, sin modificar el CSV.
 
 Si una fuente entrega coordenadas proyectadas —por ejemplo UTM—, deben transformarse a **EPSG:4326** con el huso y datum indicados por el documento antes de incorporarlas. Si el datum o el huso no están claros, no se debe asumir una conversión.
+
+## Capas cartográficas
+
+El filtro muestra las capas en este orden: límites provinciales, cantonales y parroquiales; Ejes FONAG; Áreas de Conservación Hídrica; Quito urbano; vías; y ríos. Las vías se representan en gris y los ríos en celeste brillante.
+
+Las vías y los ríos publicados fueron recortados geométricamente con el límite de Ejes FONAG antes de transformarse a WGS 84 geográfico e incorporarse al HTML. La versión pública contiene únicamente las porciones interiores resultantes; no necesita descargar archivos SHP durante su uso.
 
 ## Validación automática
 
