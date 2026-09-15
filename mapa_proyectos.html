@@ -554,7 +554,7 @@
     const map = L.map("map", {
       zoomControl: false,
       scrollWheelZoom: false,
-      zoomSnap: 1,
+      zoomSnap: .25,
       zoomDelta: 1,
       minZoom: 4,
       maxZoom: 18,
@@ -1090,23 +1090,18 @@
     }
 
     function fitSelection() {
-      const bounds = L.latLngBounds([]);
-      visibleProjects.forEach(project => bounds.extend([project.latitud, project.longitud]));
-      activeSpatial.forEach(layerId => {
-        const layer = spatialGroups.get(layerId);
-        if (!layer || !map.hasLayer(layer) || typeof layer.getBounds !== "function") return;
-        const layerBounds = layer.getBounds();
-        if (layerBounds.isValid()) bounds.extend(layerBounds);
-      });
+      const ejesLayer = spatialGroups.get("ejes_fonag");
+      if (!ejesLayer || typeof ejesLayer.getBounds !== "function") return;
+      const bounds = ejesLayer.getBounds();
       if (!bounds.isValid()) return;
       const topbarRect = document.querySelector(".topbar").getBoundingClientRect();
       const panelRect = panel.getBoundingClientRect();
       const desktop = window.innerWidth > 760;
-      const topPadding = Math.ceil(topbarRect.bottom + (desktop ? 42 : 24));
-      const leftPadding = desktop ? Math.ceil(panelRect.right + 28) : 30;
+      const topPadding = Math.ceil(topbarRect.bottom + 10);
+      const leftPadding = desktop ? Math.ceil(panelRect.right + 10) : 14;
       map.fitBounds(bounds, {
         paddingTopLeft: [leftPadding, topPadding],
-        paddingBottomRight: [50, 50],
+        paddingBottomRight: [14, 14],
         maxZoom: 13,
         animate: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
         duration: .6
