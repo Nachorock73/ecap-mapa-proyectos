@@ -1090,8 +1090,15 @@
     }
 
     function fitSelection() {
-      if (!visibleProjects.length) return;
-      const bounds = L.latLngBounds(visibleProjects.map(project => [project.latitud, project.longitud]));
+      const bounds = L.latLngBounds([]);
+      visibleProjects.forEach(project => bounds.extend([project.latitud, project.longitud]));
+      activeSpatial.forEach(layerId => {
+        const layer = spatialGroups.get(layerId);
+        if (!layer || !map.hasLayer(layer) || typeof layer.getBounds !== "function") return;
+        const layerBounds = layer.getBounds();
+        if (layerBounds.isValid()) bounds.extend(layerBounds);
+      });
+      if (!bounds.isValid()) return;
       const topbarRect = document.querySelector(".topbar").getBoundingClientRect();
       const panelRect = panel.getBoundingClientRect();
       const desktop = window.innerWidth > 760;
@@ -1124,37 +1131,23 @@
       else if (matches.length) searchResults.querySelector(".search-result")?.focus();
     });
     document.getElementById("reset-filters").addEventListener("click", () => {
-      activeTypes.clear(); TYPES.forEach(value => activeTypes.add(value));
-      activeStates.clear(); STATES.forEach(value => activeStates.add(value));
-      activeLines.clear(); LINES.forEach(value => activeLines.add(value));
-      document.querySelectorAll("#type-filters input, #state-filters input, #line-filters input").forEach(input => { input.checked = true; });
+      activeTypes.clear();
+      activeStates.clear();
+      activeLines.clear();
+      document.querySelectorAll("#type-filters input, #state-filters input, #line-filters input").forEach(input => { input.checked = false; });
 
-      activeSpatial.clear();
-      SPATIAL_LAYERS.forEach(spec => {
-        const enabled = Boolean(spec.default);
+      SPATIAL_LAYERS.filter(spec => spec.group === "stations").forEach(spec => {
+        activeSpatial.delete(spec.id);
         const layer = spatialGroups.get(spec.id);
-        const input = [...document.querySelectorAll("#station-filters input, #spatial-filters input")].find(item => item.value === spec.id);
-        if (input) input.checked = enabled;
-        if (enabled) {
-          activeSpatial.add(spec.id);
-          if (!map.hasLayer(layer)) layer.addTo(map);
-        } else if (map.hasLayer(layer)) {
-          map.removeLayer(layer);
-        }
-        const legend = document.getElementById(`legend-${spec.id}`);
-        const toggle = legend ? document.querySelector(`[aria-controls="${legend.id}"]`) : null;
-        if (legend) legend.hidden = !enabled;
-        if (toggle) {
-          toggle.setAttribute("aria-expanded", String(enabled));
-          toggle.setAttribute("aria-label", `${enabled ? "Ocultar" : "Mostrar"} leyenda de ${spec.name}`);
-        }
+        if (layer && map.hasLayer(layer)) map.removeLayer(layer);
+        const input = [...document.querySelectorAll("#station-filters input")].find(item => item.value === spec.id);
+        if (input) input.checked = false;
       });
 
       searchInput.value = "";
       renderSearchResults();
       closeProjectDetails();
       updateMap();
-      fitSelection();
       requestAnimationFrame(refreshSpatialLabels);
     });
 
