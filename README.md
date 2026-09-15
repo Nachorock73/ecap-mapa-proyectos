@@ -1,6 +1,6 @@
 # Mapa de proyectos de la Estación Científica Agua y Páramo
 
-El mapa utiliza `base_datos_proyectos_investigacion.csv` como fuente pública de los proyectos. El libro `Lista_Investigaciones_ECAP_RS.xlsx` incluye la hoja `Base_mapa`, preparada como versión editable de esa misma tabla. Al reemplazar o actualizar el CSV y recargar la página, los puntos, contadores, filtros y fichas informativas se reconstruyen automáticamente.
+El mapa utiliza `proyectos_ecap.csv` como fuente pública de los proyectos. `proyectos_ecap.xlsx` es la versión editable de la misma base: contiene las mismas columnas y registros, con filtros y formatos para facilitar su mantenimiento. Al exportar la hoja `Proyectos` como CSV y recargar la página, los puntos, contadores, filtros y fichas informativas se reconstruyen automáticamente.
 
 La versión pública está disponible en **[nachorock73.github.io/ecap-mapa-proyectos](https://nachorock73.github.io/ecap-mapa-proyectos/)**.
 
@@ -35,15 +35,17 @@ Al pasar el cursor sobre un punto aparece una vista breve con tipo, estado, tít
 
 ## Actualizar la base con Excel
 
-1. Hacer una copia de respaldo de `Lista_Investigaciones_ECAP_RS.xlsx` y de `base_datos_proyectos_investigacion.csv`.
-2. Abrir `Lista_Investigaciones_ECAP_RS.xlsx` y editar la hoja `Base_mapa`.
-3. No modificar los nombres ni el orden de los encabezados de esa hoja.
-4. Agregar, eliminar o actualizar registros. El campo `presupuesto` puede quedar vacío cuando el dato todavía no esté disponible.
-5. Exportar únicamente la hoja `Base_mapa` mediante **Archivo → Guardar como → CSV UTF-8 delimitado por comas (.csv)**.
-6. Conservar exactamente el nombre `base_datos_proyectos_investigacion.csv` y reemplazar el archivo anterior en esta carpeta.
-7. Recargar <http://localhost:8000>. El mapa solicita una copia reciente del CSV para evitar que el navegador muestre una versión almacenada en caché.
+1. Descargar o hacer una copia de respaldo de `proyectos_ecap.xlsx` y `proyectos_ecap.csv`.
+2. Abrir `proyectos_ecap.xlsx` y editar la única hoja, denominada `Proyectos`.
+3. Mantener exactamente los diez encabezados y su orden. No agregar filas de título, celdas combinadas ni columnas auxiliares.
+4. Agregar, eliminar o actualizar registros dentro de la tabla. Para un proyecto nuevo, completar como mínimo `latitud` y `longitud`; `presupuesto` puede quedar vacío cuando el dato no esté disponible.
+5. Guardar primero el Excel para conservar la versión editable.
+6. Con la hoja `Proyectos` activa, seleccionar **Archivo → Guardar como** y elegir **CSV UTF-8 delimitado por comas (.csv)**. Si Excel avisa que el formato solo conserva la hoja activa, confirmar.
+7. Guardar el archivo con el nombre exacto `proyectos_ecap.csv` y reemplazar el CSV anterior en la raíz del repositorio.
+8. Verificar que el CSV conserve 10 columnas, que las coordenadas sigan en sus columnas y que títulos o resúmenes con comas permanezcan entre comillas.
+9. Probar la actualización en <http://localhost:8000> antes de publicarla. El mapa solicita una copia reciente del CSV para evitar datos almacenados en caché.
 
-Antes de exportar, cada proyecto nuevo debe tener una `latitud` y una `longitud` válidas. No se deben combinar celdas ni agregar títulos por encima de los encabezados en `Base_mapa`. Para retirar un proyecto del mapa se elimina su fila completa; para ocultarlo temporalmente es preferible conservar una copia de respaldo fuera del CSV publicado.
+El Excel es el archivo maestro para futuras ediciones y el CSV es la copia utilizada por el mapa. Después de cada cambio deben guardarse y publicarse ambos archivos con el mismo contenido. Para retirar un proyecto del mapa se elimina su fila completa en el Excel y luego se vuelve a generar el CSV; para ocultarlo temporalmente es preferible conservar una copia de respaldo fuera del CSV publicado.
 
 Las comas y saltos de línea dentro de títulos o resúmenes son válidos cuando Excel guarda correctamente esos campos entre comillas. Las tildes, la `ñ` y otros caracteres se conservan al usar CSV UTF-8.
 
@@ -110,11 +112,11 @@ Para revisar avisos técnicos en Chrome o Edge, abrir las herramientas de desarr
 
 - `index.html`: entrada compatible con GitHub Pages.
 - `mapa_proyectos.html`: mapa institucional y lógica de lectura del CSV.
-- `base_datos_proyectos_investigacion.csv`: fuente pública que consume el mapa.
-- `Lista_Investigaciones_ECAP_RS.xlsx`: base editable institucional; su hoja `Base_mapa` replica la tabla publicada e incluye el campo de presupuesto.
+- `proyectos_ecap.csv`: fuente pública que consume el mapa.
+- `proyectos_ecap.xlsx`: archivo maestro editable; su hoja `Proyectos` replica la tabla publicada.
 - `logo.png`: logotipo del encabezado.
 
-El personal encargado de actualizar proyectos puede trabajar en la hoja `Base_mapa` del Excel y exportarla como CSV. No necesita ejecutar los scripts de `_work_consolidacion`.
+El personal encargado de actualizar proyectos puede trabajar en la hoja `Proyectos` del Excel y exportarla como CSV. No necesita instalar herramientas adicionales ni ejecutar scripts.
 
 ## Actualizar la versión publicada en GitHub Pages
 
@@ -123,9 +125,10 @@ El repositorio público es [Nachorock73/ecap-mapa-proyectos](https://github.com/
 Para publicar una actualización de la base:
 
 1. Validar primero el CSV en la versión local.
-2. Reemplazar `base_datos_proyectos_investigacion.csv` en la raíz del repositorio, sin cambiar su nombre.
-3. Confirmar el cambio mediante un commit en GitHub o con Git.
-4. Esperar a que GitHub Pages termine el despliegue.
-5. Abrir <https://nachorock73.github.io/ecap-mapa-proyectos/> y verificar el número de proyectos, los filtros y varios puntos.
+2. Reemplazar `proyectos_ecap.csv` en la raíz del repositorio, sin cambiar su nombre.
+3. Subir también `proyectos_ecap.xlsx` para mantener sincronizada la versión editable.
+4. Confirmar ambos cambios mediante un commit en GitHub o con Git.
+5. Esperar a que GitHub Pages termine el despliegue.
+6. Abrir <https://nachorock73.github.io/ecap-mapa-proyectos/> y verificar el número de proyectos, los filtros y varios puntos.
 
 La versión pública contiene información y coordenadas exactas; cualquier fila nueva debe contar con autorización institucional antes de incorporarse.
