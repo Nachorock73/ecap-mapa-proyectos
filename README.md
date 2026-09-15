@@ -1,6 +1,6 @@
 # Mapa de proyectos de la Estación Científica Agua y Páramo
 
-El mapa utiliza `base_datos_proyectos_investigacion.csv` como fuente única de los proyectos. Al reemplazar o actualizar ese CSV y recargar la página, los puntos, contadores, filtros y cuadros informativos se reconstruyen automáticamente.
+El mapa utiliza `base_datos_proyectos_investigacion.csv` como fuente pública de los proyectos. El libro `Lista_Investigaciones_ECAP_RS.xlsx` incluye la hoja `Base_mapa`, preparada como versión editable de esa misma tabla. Al reemplazar o actualizar el CSV y recargar la página, los puntos, contadores, filtros y fichas informativas se reconstruyen automáticamente.
 
 La versión pública está disponible en **[nachorock73.github.io/ecap-mapa-proyectos](https://nachorock73.github.io/ecap-mapa-proyectos/)**.
 
@@ -29,25 +29,27 @@ El mapa necesita conexión a Internet para descargar Leaflet, Papa Parse y las t
 
 ## Buscar proyectos
 
-El campo **Búsqueda por palabras** consulta simultáneamente título, autoría, línea prioritaria, tipo, estado y resumen. Al escribir dos o más caracteres se muestran debajo hasta ocho coincidencias ordenadas por relevancia, con el título, la autoría y un fragmento del resumen; las palabras coincidentes aparecen resaltadas. Al seleccionar un resultado, el mapa habilita sus filtros, acerca la vista al punto y fija su cuadro informativo.
+El campo **Búsqueda por palabras** consulta simultáneamente título, autoría, línea prioritaria, tipo, estado y resumen. Al escribir dos o más caracteres se muestran debajo hasta ocho coincidencias ordenadas por relevancia, con el título, la autoría y un fragmento del resumen; las palabras coincidentes aparecen resaltadas. Al seleccionar un resultado, el mapa habilita sus filtros, acerca la vista al punto y abre su ficha lateral.
+
+Al pasar el cursor sobre un punto aparece una vista breve con tipo, estado, título, línea prioritaria, autoría y año. Al hacer clic se abre una ficha fija a la derecha con esa información, el resumen, las coordenadas y el presupuesto. El texto de la ficha puede seleccionarse y el botón **Cerrar** la oculta.
 
 ## Actualizar la base con Excel
 
-1. Hacer una copia de respaldo de `base_datos_proyectos_investigacion.csv`.
-2. Abrir el CSV en Excel.
-3. No modificar los nombres ni el orden de los encabezados.
-4. Agregar, eliminar o actualizar registros.
-5. Guardar mediante **Archivo → Guardar como → CSV UTF-8 delimitado por comas (.csv)**.
+1. Hacer una copia de respaldo de `Lista_Investigaciones_ECAP_RS.xlsx` y de `base_datos_proyectos_investigacion.csv`.
+2. Abrir `Lista_Investigaciones_ECAP_RS.xlsx` y editar la hoja `Base_mapa`.
+3. No modificar los nombres ni el orden de los encabezados de esa hoja.
+4. Agregar, eliminar o actualizar registros. El campo `presupuesto` puede quedar vacío cuando el dato todavía no esté disponible.
+5. Exportar únicamente la hoja `Base_mapa` mediante **Archivo → Guardar como → CSV UTF-8 delimitado por comas (.csv)**.
 6. Conservar exactamente el nombre `base_datos_proyectos_investigacion.csv` y reemplazar el archivo anterior en esta carpeta.
 7. Recargar <http://localhost:8000>. El mapa solicita una copia reciente del CSV para evitar que el navegador muestre una versión almacenada en caché.
 
-Antes de guardar, cada proyecto nuevo debe tener una `latitud` y una `longitud` válidas. No se deben combinar celdas, agregar títulos por encima de los encabezados ni guardar el archivo como libro de Excel (`.xlsx`). Para retirar un proyecto del mapa se elimina su fila completa; para ocultarlo temporalmente es preferible conservar una copia de respaldo fuera del CSV publicado.
+Antes de exportar, cada proyecto nuevo debe tener una `latitud` y una `longitud` válidas. No se deben combinar celdas ni agregar títulos por encima de los encabezados en `Base_mapa`. Para retirar un proyecto del mapa se elimina su fila completa; para ocultarlo temporalmente es preferible conservar una copia de respaldo fuera del CSV publicado.
 
 Las comas y saltos de línea dentro de títulos o resúmenes son válidos cuando Excel guarda correctamente esos campos entre comillas. Las tildes, la `ñ` y otros caracteres se conservan al usar CSV UTF-8.
 
 ## Columnas de la base
 
-Los nueve encabezados deben existir, aunque algunos valores individuales puedan quedar vacíos.
+Los diez encabezados deben existir, aunque algunos valores individuales puedan quedar vacíos.
 
 | Columna | Uso | Regla por registro |
 | --- | --- | --- |
@@ -60,6 +62,7 @@ Los nueve encabezados deben existir, aunque algunos valores individuales puedan 
 | `latitud` | Coordenada geográfica norte/sur en WGS84 | Obligatoria; número entre `-90` y `90` |
 | `longitud` | Coordenada geográfica este/oeste en WGS84 | Obligatoria; número entre `-180` y `180` |
 | `resumen` | Resumen mostrado al consultar el punto | Opcional |
+| `presupuesto` | Aporte o presupuesto del proyecto en USD; se muestra en la ficha lateral | Opcional; usar un número sin símbolo de moneda o dejar vacío |
 
 Para las coordenadas se recomienda usar punto decimal, por ejemplo `-0.230391` y `-78.154659`. El lector también tolera una coma decimal cuando el valor está correctamente entre comillas dentro del CSV.
 
@@ -89,7 +92,7 @@ La cobertura 2024 fue disuelta mediante su clasificación de nivel 2 y posterior
 
 ## Estaciones
 
-El apartado **Estaciones** permite activar de forma independiente las estaciones hidrológicas, meteorológicas y pluviométricas. Todas se muestran con símbolos triangulares y un color diferente por tipo. Al situar el cursor o seleccionar una estación se muestran su nombre, tipo, código, altitud, estado y provincia cuando esos atributos están disponibles. La versión publicada contiene 60 estaciones activas transformadas a WGS 84.
+El apartado **Estaciones** permite activar de forma independiente las estaciones hidrológicas, meteorológicas y pluviométricas. Todas se muestran con símbolos triangulares y un color diferente por tipo. Al situar el cursor sobre una estación se muestran su nombre, tipo, código, altitud, estado y provincia cuando esos atributos están disponibles. La versión publicada contiene 60 estaciones activas transformadas a WGS 84.
 
 ## Validación automática
 
@@ -107,10 +110,11 @@ Para revisar avisos técnicos en Chrome o Edge, abrir las herramientas de desarr
 
 - `index.html`: entrada compatible con GitHub Pages.
 - `mapa_proyectos.html`: mapa institucional y lógica de lectura del CSV.
-- `base_datos_proyectos_investigacion.csv`: fuente única de los proyectos.
+- `base_datos_proyectos_investigacion.csv`: fuente pública que consume el mapa.
+- `Lista_Investigaciones_ECAP_RS.xlsx`: base editable institucional; su hoja `Base_mapa` replica la tabla publicada e incluye el campo de presupuesto.
 - `logo.png`: logotipo del encabezado.
 
-El personal encargado de actualizar proyectos solo necesita modificar el CSV; las capas espaciales ya están incorporadas en el HTML publicado.
+El personal encargado de actualizar proyectos puede trabajar en la hoja `Base_mapa` del Excel y exportarla como CSV. No necesita ejecutar los scripts de `_work_consolidacion`.
 
 ## Actualizar la versión publicada en GitHub Pages
 
