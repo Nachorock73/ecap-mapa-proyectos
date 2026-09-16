@@ -151,6 +151,12 @@
     .search-result mark { padding: 0 1px; color: var(--ink); background: rgba(219,128,23,.32); border-radius: 2px; }
     .search-status { margin: 7px 2px 0; color: var(--muted); font-size: 10px; line-height: 1.35; }
     .choice-list { display: grid; gap: 7px; }
+    .selection-count {
+      margin: 9px 0 0; padding: 6px 9px; color: var(--muted);
+      background: rgba(18,45,95,.055); border: 1px solid rgba(18,45,95,.1);
+      border-radius: 8px; font-size: 10px; line-height: 1.2; text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
     .choice {
       position: relative;
       display: grid;
@@ -383,22 +389,27 @@
       <section class="filter-group" aria-labelledby="tipo-label">
         <span id="tipo-label" class="filter-label">Tipo</span>
         <div class="choice-list" id="type-filters"></div>
+        <p id="type-selection-count" class="selection-count" aria-live="polite"></p>
       </section>
       <section class="filter-group" aria-labelledby="estado-label">
         <span id="estado-label" class="filter-label">Estado</span>
         <div class="choice-list" id="state-filters"></div>
+        <p id="state-selection-count" class="selection-count" aria-live="polite"></p>
       </section>
       <section class="filter-group" aria-labelledby="linea-label">
         <span id="linea-label" class="filter-label">Línea prioritaria de investigación ECAP</span>
         <div class="choice-list line-list" id="line-filters"></div>
+        <p id="line-selection-count" class="selection-count" aria-live="polite"></p>
       </section>
       <section class="filter-group" aria-labelledby="estaciones-label">
         <span id="estaciones-label" class="filter-label">Estaciones</span>
         <div class="choice-list" id="station-filters"></div>
+        <p id="station-selection-count" class="selection-count" aria-live="polite"></p>
       </section>
       <section class="filter-group" aria-labelledby="capas-label">
         <span id="capas-label" class="filter-label">Capas cartográficas</span>
         <div class="choice-list" id="spatial-filters"></div>
+        <p id="spatial-selection-count" class="selection-count" aria-live="polite"></p>
       </section>
       <button id="fit-selection" class="fit-button" type="button">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5m13 5h5v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -926,6 +937,7 @@
         const input = [...document.querySelectorAll(`#${containerId} input[type="checkbox"]`)].find(item => item.value === value);
         if (input) input.checked = true;
       });
+      syncSelectionCounts();
     }
 
     function revealSearchProject(project) {
@@ -1004,6 +1016,7 @@
           const set = group === "type" ? activeTypes : group === "state" ? activeStates : activeLines;
           event.target.checked ? set.add(value) : set.delete(value);
           updateMap();
+          syncSelectionCounts();
         });
       }
       return label;
@@ -1046,6 +1059,7 @@
           map.removeLayer(layer);
         }
         if (spec.legend) setLegendExpanded(event.target.checked);
+        syncSelectionCounts();
         requestAnimationFrame(refreshSpatialLabels);
       });
       if (!spec.legend) return label;
@@ -1076,6 +1090,24 @@
     SPATIAL_LAYERS.filter(spec => spec.group === "stations").forEach(spec => document.getElementById("station-filters").appendChild(makeSpatialChoice(spec)));
     SPATIAL_LAYERS.filter(spec => spec.group !== "stations").forEach(spec => document.getElementById("spatial-filters").appendChild(makeSpatialChoice(spec)));
 
+    const selectionCountGroups = [
+      ["type-filters", "type-selection-count"],
+      ["state-filters", "state-selection-count"],
+      ["line-filters", "line-selection-count"],
+      ["station-filters", "station-selection-count"],
+      ["spatial-filters", "spatial-selection-count"]
+    ];
+
+    function syncSelectionCounts() {
+      selectionCountGroups.forEach(([containerId, outputId]) => {
+        const inputs = [...document.querySelectorAll(`#${containerId} input[type="checkbox"]`)];
+        const selected = inputs.filter(input => input.checked).length;
+        document.getElementById(outputId).textContent = `Seleccionados ${selected}/${inputs.length}`;
+      });
+    }
+
+    syncSelectionCounts();
+
     function updateMap() {
       markerLayer.clearLayers();
       visibleProjects = PROJECTS.filter(project => activeTypes.has(project.tipo) && activeStates.has(project.estado) && activeLines.has(project.linea));
@@ -1094,6 +1126,7 @@
       if (!ejesLayer || typeof ejesLayer.getBounds !== "function") return;
       const bounds = ejesLayer.getBounds();
       if (!bounds.isValid()) return;
+      visibleProjects.forEach(project => bounds.extend([project.latitud, project.longitud]));
       const topbarRect = document.querySelector(".topbar").getBoundingClientRect();
       const panelRect = panel.getBoundingClientRect();
       const desktop = window.innerWidth > 760;
@@ -1143,6 +1176,7 @@
       renderSearchResults();
       closeProjectDetails();
       updateMap();
+      syncSelectionCounts();
       requestAnimationFrame(refreshSpatialLabels);
     });
 
@@ -1156,7 +1190,7 @@
       panel.querySelectorAll(".layer-legend").forEach(legend => { legend.hidden = false; });
       searchInput.value = "";
       renderSearchResults();
-      updateMap(); fitSelection();
+      updateMap(); syncSelectionCounts(); fitSelection();
     });
     mobileToggle.addEventListener("click", () => {
       const open = panel.classList.toggle("open");
