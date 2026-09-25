@@ -1205,27 +1205,18 @@
 
     const mapElement = document.getElementById("map");
     let lastNormalWheel = 0;
-    let fineZoomTarget = null;
-    let fineZoomAnchor = null;
-    let fineZoomFrame = null;
+    let wheelZoomActive = false;
+    let wheelRefreshTimer = null;
 
     function clampZoom(value) {
       return Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), value));
     }
 
-    function renderFineZoom() {
-      fineZoomFrame = null;
-      if (fineZoomTarget === null || !fineZoomAnchor) return;
-      const current = map.getZoom();
-      const distance = fineZoomTarget - current;
-      const next = Math.abs(distance) < .008 ? fineZoomTarget : current + distance * .42;
-      map.setZoomAround(fineZoomAnchor, clampZoom(next), { animate: false });
-      if (Math.abs(fineZoomTarget - next) >= .008) {
-        fineZoomFrame = requestAnimationFrame(renderFineZoom);
-      } else {
-        fineZoomTarget = null;
-        fineZoomAnchor = null;
-      }
+    function finishWheelZoom() {
+      wheelZoomActive = false;
+      wheelRefreshTimer = null;
+      separateCoincidentMarkers();
+      refreshSpatialLabels();
     }
 
     function handleMapWheel(event) {
@@ -1238,31 +1229,25 @@
       const pixels = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaMode === 2 ? event.deltaY * window.innerHeight : event.deltaY;
       if (pixels === 0) return;
 
-      if (event.ctrlKey) {
-        const increment = Math.max(-.3, Math.min(.3, -pixels * .003));
-        fineZoomTarget = clampZoom((fineZoomTarget ?? map.getZoom()) + increment);
-        fineZoomAnchor = anchor;
-        map.stop();
-        if (fineZoomFrame === null) fineZoomFrame = requestAnimationFrame(renderFineZoom);
-        return;
-      }
-
       const now = performance.now();
-      if (now - lastNormalWheel < 38) return;
-      lastNormalWheel = now;
-      fineZoomTarget = null;
-      fineZoomAnchor = null;
-      if (fineZoomFrame !== null) cancelAnimationFrame(fineZoomFrame);
-      fineZoomFrame = null;
-      const direction = pixels > 0 ? -1 : 1;
+      if (!event.ctrlKey && now - lastNormalWheel < 28) return;
+      if (!event.ctrlKey) lastNormalWheel = now;
+
+      const increment = event.ctrlKey
+        ? Math.max(-.5, Math.min(.5, -pixels * .006))
+        : (pixels > 0 ? -1 : 1);
+
+      wheelZoomActive = true;
+      if (wheelRefreshTimer !== null) clearTimeout(wheelRefreshTimer);
       map.stop();
-      map.setZoomAround(anchor, clampZoom(map.getZoom() + direction), { animate: false });
+      map.setZoomAround(anchor, clampZoom(map.getZoom() + increment), { animate: false });
+      wheelRefreshTimer = setTimeout(finishWheelZoom, 90);
     }
     window.addEventListener("wheel", handleMapWheel, { capture: true, passive: false });
 
     updateMap();
     fitSelection();
-    map.on("zoomend moveend", () => { separateCoincidentMarkers(); refreshSpatialLabels(); });
+    map.on("zoomend moveend", () => { if (!wheelZoomActive) { separateCoincidentMarkers(); refreshSpatialLabels(); } });
     window.addEventListener("resize", () => {
       map.invalidateSize();
       if (tooltip.classList.contains("visible")) hideTooltip();
