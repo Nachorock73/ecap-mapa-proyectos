@@ -415,7 +415,7 @@
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5m13 5h5v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Ajustar a la selección
       </button>
-      <p class="zoom-note">Rueda: zoom amplio · <strong>Ctrl</strong> + rueda: zoom fino</p>
+      <p class="zoom-note">Rueda: zoom normal · <strong>Ctrl</strong> + rueda: zoom suave</p>
     </aside>
 
     <button id="mobile-filter-toggle" class="mobile-filter-toggle" type="button" aria-expanded="false" aria-controls="filter-panel">Filtros</button>
@@ -1164,13 +1164,18 @@
       activeLines.clear();
       document.querySelectorAll("#type-filters input, #state-filters input, #line-filters input").forEach(input => { input.checked = false; });
 
-      SPATIAL_LAYERS.filter(spec => spec.group === "stations").forEach(spec => {
+      SPATIAL_LAYERS.forEach(spec => {
         activeSpatial.delete(spec.id);
         const layer = spatialGroups.get(spec.id);
         if (layer && map.hasLayer(layer)) map.removeLayer(layer);
-        const input = [...document.querySelectorAll("#station-filters input")].find(item => item.value === spec.id);
+        const input = [...document.querySelectorAll("#station-filters input, #spatial-filters input")].find(item => item.value === spec.id);
         if (input) input.checked = false;
       });
+      panel.querySelectorAll(".legend-toggle").forEach(button => {
+        button.setAttribute("aria-expanded", "false");
+        button.setAttribute("aria-label", button.getAttribute("aria-label").replace("Ocultar", "Mostrar"));
+      });
+      panel.querySelectorAll(".layer-legend").forEach(legend => { legend.hidden = true; });
 
       searchInput.value = "";
       renderSearchResults();
@@ -1199,8 +1204,7 @@
     });
 
     const mapElement = document.getElementById("map");
-    let normalWheelLocked = false;
-    let fineWheelLocked = false;
+    let wheelLocked = false;
     function handleMapWheel(event) {
       if (!(event.target instanceof Element) || !mapElement.contains(event.target)) return;
       event.preventDefault();
@@ -1209,23 +1213,14 @@
       const point = L.point(event.clientX - rect.left, event.clientY - rect.top);
       const anchor = map.containerPointToLatLng(point);
       const pixels = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaMode === 2 ? event.deltaY * window.innerHeight : event.deltaY;
-      if (event.ctrlKey) {
-        if (fineWheelLocked) return;
-        fineWheelLocked = true;
-        const direction = pixels > 0 ? -1 : 1;
-        const target = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), Math.round(map.getZoom()) + direction));
-        map.stop();
-        map.setZoomAround(anchor, target, { animate: true });
-        setTimeout(() => { fineWheelLocked = false; }, 280);
-      } else {
-        if (normalWheelLocked) return;
-        normalWheelLocked = true;
-        const direction = pixels > 0 ? -1 : 1;
-        const target = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), Math.round(map.getZoom()) + direction * 2));
-        map.stop();
-        map.setZoomAround(anchor, target, { animate: false });
-        setTimeout(() => { normalWheelLocked = false; }, 105);
-      }
+      if (wheelLocked || pixels === 0) return;
+      wheelLocked = true;
+      const direction = pixels > 0 ? -1 : 1;
+      const step = event.ctrlKey ? .25 : 1;
+      const target = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), map.getZoom() + direction * step));
+      map.stop();
+      map.setZoomAround(anchor, target, { animate: false });
+      setTimeout(() => { wheelLocked = false; }, event.ctrlKey ? 70 : 110);
     }
     window.addEventListener("wheel", handleMapWheel, { capture: true, passive: false });
 
