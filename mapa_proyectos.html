@@ -565,7 +565,7 @@
     const map = L.map("map", {
       zoomControl: false,
       scrollWheelZoom: false,
-      zoomSnap: .25,
+      zoomSnap: .01,
       zoomDelta: 1,
       minZoom: 4,
       maxZoom: 18,
@@ -1204,7 +1204,30 @@
     });
 
     const mapElement = document.getElementById("map");
-    let wheelLocked = false;
+    let lastNormalWheel = 0;
+    let fineZoomTarget = null;
+    let fineZoomAnchor = null;
+    let fineZoomFrame = null;
+
+    function clampZoom(value) {
+      return Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), value));
+    }
+
+    function renderFineZoom() {
+      fineZoomFrame = null;
+      if (fineZoomTarget === null || !fineZoomAnchor) return;
+      const current = map.getZoom();
+      const distance = fineZoomTarget - current;
+      const next = Math.abs(distance) < .008 ? fineZoomTarget : current + distance * .42;
+      map.setZoomAround(fineZoomAnchor, clampZoom(next), { animate: false });
+      if (Math.abs(fineZoomTarget - next) >= .008) {
+        fineZoomFrame = requestAnimationFrame(renderFineZoom);
+      } else {
+        fineZoomTarget = null;
+        fineZoomAnchor = null;
+      }
+    }
+
     function handleMapWheel(event) {
       if (!(event.target instanceof Element) || !mapElement.contains(event.target)) return;
       event.preventDefault();
@@ -1213,14 +1236,27 @@
       const point = L.point(event.clientX - rect.left, event.clientY - rect.top);
       const anchor = map.containerPointToLatLng(point);
       const pixels = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaMode === 2 ? event.deltaY * window.innerHeight : event.deltaY;
-      if (wheelLocked || pixels === 0) return;
-      wheelLocked = true;
+      if (pixels === 0) return;
+
+      if (event.ctrlKey) {
+        const increment = Math.max(-.3, Math.min(.3, -pixels * .003));
+        fineZoomTarget = clampZoom((fineZoomTarget ?? map.getZoom()) + increment);
+        fineZoomAnchor = anchor;
+        map.stop();
+        if (fineZoomFrame === null) fineZoomFrame = requestAnimationFrame(renderFineZoom);
+        return;
+      }
+
+      const now = performance.now();
+      if (now - lastNormalWheel < 38) return;
+      lastNormalWheel = now;
+      fineZoomTarget = null;
+      fineZoomAnchor = null;
+      if (fineZoomFrame !== null) cancelAnimationFrame(fineZoomFrame);
+      fineZoomFrame = null;
       const direction = pixels > 0 ? -1 : 1;
-      const step = event.ctrlKey ? .25 : 1;
-      const target = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), map.getZoom() + direction * step));
       map.stop();
-      map.setZoomAround(anchor, target, { animate: false });
-      setTimeout(() => { wheelLocked = false; }, event.ctrlKey ? 70 : 110);
+      map.setZoomAround(anchor, clampZoom(map.getZoom() + direction), { animate: false });
     }
     window.addEventListener("wheel", handleMapWheel, { capture: true, passive: false });
 
